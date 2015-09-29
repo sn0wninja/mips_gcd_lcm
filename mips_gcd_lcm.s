@@ -9,9 +9,13 @@
 # ------------------------------------------------
 
 # Registers used:
-#   $s0 = n1
-#   $s1 = n2
-#
+#   $s0 = n1 (modified at runtime)
+#   $s1 = n2 (modified at runtime)
+#   $s2 = original n1
+#   $s3 = original n2
+#   $t0 = n1*n2 (LCM function)
+#       $t0 = $s2 / $s3
+#   $s4 = $t0 / $s0 <- GCD result
 #   allocating 3 words on the stack
 #   $ra, $s0, $s1
 #   return address, n1, n2
@@ -40,6 +44,7 @@ main:
     li $v0, 5               # load the read_int function
     syscall                 # make the syscall
     move $s0, $v0           # store the input in s0
+    move $s2, $s0           # copy original n1
 
     # Get input for n2:
     la $a0, enter_n2        #load mesage enter_n2
@@ -49,6 +54,7 @@ main:
     li $v0, 5               # load the read_int function
     syscall                 # make the syscall
     move $s1, $v0           # store the input in s1
+    move $s3, $s1           # copy original n2
 
 
 calc_gcd:
@@ -83,6 +89,29 @@ gcd_done:
     move $a0, $s0           # load n1
     li $v0, 1               # load print int
     syscall                 # print n1
+
+    # skip two lines to make the printing more neat
+    la $a0, endl
+    li $v0, 4
+    syscall
+
+    jal ret_lcm
+
+ret_lcm:
+
+    # LCM function to calculate least common multiple
+    mult $s2, $s3
+    mflo $t0
+    div $t0, $s0
+    mflo $s4
+
+    la $a0, lcm_msg         # load lcm_msg
+    li $v0, 4               # load function print_string
+    syscall                 # make the syscall
+
+    move $a0, $s4           # load s2
+    li $v0, 1               # load print int
+    syscall                 # print s2
 
     # skip two lines to make the printing more neat
     la $a0, endl
