@@ -109,9 +109,9 @@ ret_lcm:
     li $v0, 4               # load function print_string
     syscall                 # make the syscall
 
-    move $a0, $s4           # load s2
+    move $a0, $s4           # load s4
     li $v0, 1               # load print int
-    syscall                 # print s2
+    syscall                 # print s4
 
     # skip two lines to make the printing more neat
     la $a0, endl
