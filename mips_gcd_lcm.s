@@ -7,20 +7,14 @@
 # MIPS GCD and LCM program -----------------------
 #
 # ------------------------------------------------
-# li - load immediate int
-# la - used to load the string messages for print
-# move - used to save the inputs from the user
-# div - divide
-# mult - multiply
-# j - jump to a function
-# jr - jump register
-# jr $ra - jump to register of last function
-# ------------------------------------------------
 
 # Registers used:
-#   $t1 = n1
-#   $t2 = n2
+#   $s0 = n1
+#   $s1 = n2
 #
+#   allocating 3 words on the stack
+#   $ra, $s0, $s1
+#   return address, n1, n2
 # ------------------------------------------------
 
 .data
@@ -30,8 +24,9 @@ enter_n1: .asciiz "Enter first integer n1: "
 enter_n2: .asciiz "Enter second integer n2: "
 
 # Console results messages
-gcd_msg: .asciiz "The greatest common dividsor of n1 and n2 is "
+gcd_msg: .asciiz "The greatest common divisor of n1 and n2 is "
 lcm_msg: .asciiz "The least common multiple of n1 and n2 is: "
+endl: .asciiz "\n\n"
 
 .text
 
@@ -44,7 +39,7 @@ main:
 
     li $v0, 5               # load the read_int function
     syscall                 # make the syscall
-    move $t1, $v0           # store the input in t0
+    move $s0, $v0           # store the input in s0
 
     # Get input for n2:
     la $a0, enter_n2        #load mesage enter_n2
@@ -53,10 +48,49 @@ main:
 
     li $v0, 5               # load the read_int function
     syscall                 # make the syscall
-    move $t2, $v0           # store the input in t0
+    move $s1, $v0           # store the input in s1
+
 
 calc_gcd:
 
-    beqz $t2,ret_gcd        
+    addiu $sp, $sp, -12     # allocate 3 words on the stack
+    sw $ra, 8($sp)          # save the return address on the stack
+    sw $s0, 4($sp)          # save n1 on the stack
+    sw $s1, 0($sp)          # save n2 on the stack
+
+    bnez $s1, ret_gcd             # go to calculate the GCD
+
+    lw $s1, 0($sp)          # restore parameter n2
+    lw $s0, 4($sp)          # restore parameter n1
+    lw $ra, 8($sp)          # restore parameter $ra
+    addi $sp,$sp,12         # deallocate the 3 words off the stack
+
+    jal gcd_done            # we're done!
 
 ret_gcd:
+
+    div $s0, $s1            # computer n1/n2
+    move $s0, $s1           # n1 = n2
+    mfhi $s1                # grab the remainder
+    jal calc_gcd            # return gcd(n2, n1%n2)
+
+gcd_done:
+
+    la $a0, gcd_msg         # load gcd_msg
+    li $v0, 4               # load function print_string
+    syscall                 # make the syscall
+
+    move $a0, $s0           # load n1
+    li $v0, 1               # load print int
+    syscall                 # print n1
+
+    # skip two lines to make the printing more neat
+    la $a0, endl
+    li $v0, 4
+    syscall
+
+    j exit
+
+exit:
+    li $v0, 10
+    syscall
